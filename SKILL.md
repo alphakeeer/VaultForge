@@ -6,6 +6,76 @@ description: >-
 
 # VaultForge 课程版
 
+## 主 Agent 与子 Agent 协作协议
+
+VaultForge 由一个主 Agent 负责编排，必要时创建多个职责单一的子 Agent。子 Agent 不自行改变流程、不向用户发起独立确认，也不创建流程之外的文件。
+
+### 主 Agent 的职责
+
+主 Agent 是唯一的流程控制者和用户接口，负责：
+
+1. 读取本文件并决定本次运行的课程目录、语言和模式；
+2. 执行阶段 0，生成课程清单并决定 `NEW/UPDATED/DONE`；
+3. 在阶段 1 完整解析课件，确认原始材料可用后再分发任务；
+4. 建立稳定的 `course_id`、`lesson_id`、`lesson_order` 和 `concept_id`；
+5. 创建子 Agent，明确每个子 Agent 的输入文件、输出路径、禁止修改的路径和验收条件；
+6. 汇总子 Agent 返回的结构化结果，解决冲突后才更新课程索引和进度文件；
+7. 执行最终验证、重试和对用户的唯一一次阶段性汇报。
+
+主 Agent 不应把未经验证的模型自报统计直接写入进度文件，统计必须来自实际文件扫描或子 Agent 的可核验结果。
+
+### 子 Agent 的职责边界
+
+| 子 Agent | 允许写入 | 不允许写入 | 主要输出 |
+|---|---|---|---|
+| `lesson-organizer` | 指定的新课次笔记 | 课程索引、旧课次、知识卡片 | 课次文件 + 覆盖清单 + 概念候选 |
+| `concept-card-builder` | 指定的新卡片；用户未修改卡片的受控增量 | 用户修改/锁定卡片、课次笔记正文 | 卡片文件 + 概念匹配报告 |
+| `course-index-manager` | 课程索引、进度文件 | 课次正文、卡片正文 | 索引变更 + 统计 |
+| `course-reviewer` | 主 Agent 明确指定的修复文件 | 未授权的历史文件 | 检查结果 + 修复建议 |
+
+### 子 Agent 调度规则
+
+1. 课次之间没有写入冲突时，可以并行，每个子 Agent 最多处理 10 个课次；
+2. 概念卡片任务必须在概念候选汇总后执行，不能在候选尚未去重时并行创建同名卡片；
+3. 课程索引管理必须在课次和卡片文件稳定后执行；
+4. 审查必须在所有写入完成后执行；
+5. 任一子 Agent 超时或返回格式错误，主 Agent 只重试该任务，不能盲目重跑整门课程；
+6. 不支持子 Agent 时，主 Agent 按同一输入输出协议顺序执行，不能省略覆盖清单和来源范围。
+
+### 子 Agent 任务信封
+
+主 Agent 分发任务时必须包含以下字段：
+
+```yaml
+task_id: lesson-L02
+agent: lesson-organizer
+course_dir: /absolute/path/to/course
+course_id: deep-learning
+lesson_id: L02
+lesson_order: 2
+source_files:
+  - path: lectures/CNN.pdf
+    sha256: sha256:...
+allowed_writes:
+  - 01. 课程笔记/L02 - CNN.md
+context_packet: /tmp/context-L02.json
+must_return:
+  - output_files
+  - covered_points
+  - concept_candidates
+  - source_ranges
+  - warnings
+```
+
+子 Agent 返回必须说明：写入了什么、没有写入什么、覆盖了哪些知识点、哪些内容不确定，以及是否需要主 Agent 处理冲突。没有这些字段的返回视为失败。
+
+### 冲突与锁定规则
+
+- 两个子 Agent 认为同一概念需要新建卡片时，主 Agent 先合并候选，再只允许一个卡片任务落盘；
+- `user_modified`、`locked` 和不在 `allowed_writes` 中的文件一律只读；
+- 课程索引的写入采用最后阶段单写者原则，避免并发追加造成重复链接；
+- 子 Agent 不得删除文件、移动文件或修改 Git 历史。
+
 VaultForge 课程版不是通用读书摘要器，而是一个“课程知识整理 Agent”。它把每个课件当作一节课，输出三类稳定对象：
 
 1. `00. 课程索引.md`：整门课的目录、进度和全课程知识网络；

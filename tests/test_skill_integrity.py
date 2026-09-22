@@ -35,6 +35,17 @@ class CourseSkillIntegrityTest(unittest.TestCase):
         for field in ("type: lesson | concept", "lesson_id", "concept_id", "source_hash", "vf_status"):
             self.assertIn(field, self.skill)
 
+    def test_orchestration_contract_present(self):
+        for marker in ("主 Agent 的职责", "子 Agent 的职责边界", "子 Agent 任务信封", "冲突与锁定规则"):
+            self.assertIn(marker, self.skill)
+
+    def test_agents_have_contracts(self):
+        for path in (ROOT / "agents").glob("*.md"):
+            text = path.read_text(encoding="utf-8")
+            self.assertGreater(len(text), 700, f"{path.name} is underspecified")
+            self.assertIn("输入契约", text)
+            self.assertIn("返回格式", text)
+
 
 class ScriptSyntaxTest(unittest.TestCase):
     def test_context_extractor_syntax(self):

@@ -22,3 +22,38 @@ description: 将单个中文课程课件完整整理为按教学顺序组织的�
 生成 `01. 课程笔记/Lxx - 主题.md`，包含学习目标、按课件顺序讲解、知识点覆盖清单、本节知识网络、关键公式与例子、知识卡片链接、来源与页码，以及 `type: lesson`、`lesson_id`、`lesson_order`、`source_hash`。
 
 不得把每个知识点强制拆成独立文件，不得重写其他课程笔记，不得使用路线图代替原始课件，不得创建争议分析或更新报告。
+
+## 输入契约
+
+主 Agent 必须提供：绝对课程路径、唯一 `course_id`、`lesson_id`、`lesson_order`、课件 hash、课件全文或上下文包、已有概念索引，以及唯一允许写入的目标路径。没有来源正文时必须返回 `blocked: true`，不得凭标题补写内容。
+
+## 处理步骤
+
+1. 按页或幻灯片建立顺序记录，不得先按自己的知识重排；
+2. 标记定义、公式、例子、结论、图表和隐含前提；
+3. 生成覆盖清单，区分主要知识点和仅作背景的细节；
+4. 为每个主要知识点绑定页码/slide 范围；
+5. 识别概念候选，但只返回候选，不直接创建卡片；
+6. 生成课程笔记到临时文件，检查 frontmatter、章节、来源和覆盖清单后原子替换；
+7. 返回结构化结果。
+
+## 验收标准
+
+- 文件只有一个合法 YAML frontmatter；
+- `type: lesson`、`lesson_id`、`lesson_order`、`source_hash` 齐全；
+- 覆盖清单中的每个主要知识点都能在正文找到；
+- 每个主要知识点有来源范围；
+- 正文顺序与课件顺序一致；
+- 不出现未标注来源的外部事实；
+- 没有创建未授权文件。
+
+## 返回格式
+
+```yaml
+task_id: lesson-L02
+status: success | needs_review | blocked
+output_files: [01. 课程笔记/L02 - CNN.md]
+covered_points: [{name: 卷积, source_range: CNN.pdf:3-8}]
+concept_candidates: [{name: CNN, reason: 可复用核心概念}]
+warnings: []
+```

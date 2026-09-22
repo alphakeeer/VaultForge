@@ -38,27 +38,69 @@ description: 课程索引、全课程知识网络与进度文件的唯一写入�
 
 ## 索引文件结构
 
-`00. 课程索引.md` 没有 frontmatter 契约，结构固定为四个受管章节；受管章节之外的标题一律视为用户自定义内容。
+课程版维护**两个索引**，都由 `course-index-manager` 唯一写入。
+
+### A. 课程索引 `00. 课程索引.md`
+
+受管章节固定为四个；受管章节之外的标题一律视为用户自定义内容。
 
 ```markdown
 # {课程名}
-## 课程目标
-（保留已有内容；原索引缺失时写“课件未提供”，不得编造）
-## 课程目录
-1. [[L01 - 主题]]
-2. [[L02 - 主题]]
-## 全课程知识网络
-- [[CNN]] --prerequisite--> [[卷积]]
-## 知识卡片索引
-| 卡片 | concept_id | 标准名 | 别名 | 出现课次 |
+
+## 1. 课程目录
+| 顺序 | 课次 | 主题 | 来源课件 | 状态 |
 |---|---|---|---|---|
-| [[CNN]] | cnn | CNN | 卷积神经网络 | L02, L03 |
+| 1 | [[L01 - ...]] | 具身智能导论 | `Resource/xxx.pdf` | reviewed |
+
+## 2. 本课关联的知识卡片
+（Dataview 视图，见下）
+
+## 3. 知识点覆盖进度
+| 课次 | 课件页数 | 覆盖 | 待复核 |
+
+## 4. 课件原文位置
+- `Resource/xxx.pdf` — 讲次标题（N 页）
 ```
 
-- 目录条目格式 `N. [[Lxx - 主题]]`，`N` 是 `lesson_order` 的十进制值；标题取自课次笔记 H1，与文件 stem 一致。
-- 链接目标必须解析到唯一真实文件；stem 冲突时写完整相对路径（不含 `.md`）。
-- 知识网络只写主 Agent 已确认的三元组 `- [[A]] --relation--> [[B]]`，`relation` ∈ {prerequisite, component, contrast, extension, application, sequence}。
-- 卡片索引每张卡片一行；`出现课次` 由卡片 frontmatter `source_lessons` 与课次 `## 本节知识卡片` 交叉得出，冲突时以 frontmatter 为准并记 warning。
+- 目录按 `lesson_order` **数字升序**；标题取自课次笔记 H1，与文件 stem 一致；
+- **不再维护「全课程知识网络」与手工「知识卡片索引」表**：前者已取消（知识关联改由 wikilink 表达），后者由 Dataview 自动生成。
+
+**卡片视图使用 Dataview**（课程代码由主 Agent 提供）：
+
+````markdown
+```dataview
+TABLE level AS "分级", file.folder AS "领域", source_lessons AS "涉及课次"
+FROM "50 Knowledge"
+WHERE type = "concept" AND contains(courses, "<课程代码>")
+SORT level ASC, file.name ASC
+```
+````
+
+### B. 知识库索引 `知识区/_index.md`
+
+位于知识区根目录，是全部卡片的入口：
+
+````markdown
+# 知识库索引
+
+## 全部概念卡片
+```dataview
+TABLE level AS "分级", courses AS "来源课程", file.folder AS "领域"
+FROM "50 Knowledge"
+WHERE type = "concept"
+SORT level ASC, file.name ASC
+```
+
+## 按领域分组
+```dataview
+TABLE rows.file.link AS "卡片", rows.level AS "分级"
+FROM "50 Knowledge"
+WHERE type = "concept"
+GROUP BY file.folder AS "领域"
+```
+````
+
+**为什么用 Dataview**：卡片由多个课次、多门课逐步新增，手工登记必然遗漏。视图自动跟随 frontmatter，**新增卡片零维护**——这是替代「主题子文件夹」的关键：文件夹只能单一归属，而标签 + 视图可以多维度呈现。
 
 ## 更新步骤
 
@@ -75,7 +117,7 @@ description: 课程索引、全课程知识网络与进度文件的唯一写入�
 | 指标 | 定义 | 计数方式 |
 |---|---|---|
 | `lessons` | `type: lesson` 的课次数 | `01. 课程笔记/*.md` 顶层文件，与 manifest `lessons` 长度一致 |
-| `concepts` | `type: concept` 的卡片数 | `02. 知识卡片/*.md` 顶层文件，与 manifest `concepts` 长度一致 |
+| `concepts` | `type: concept` 的卡片数 | **知识区**内的卡片文件，与 manifest `concepts` 长度一致 |
 | `covered_points` | 覆盖点总数 | 所有课次 `## 知识点覆盖清单` 中 `status: covered` 且知识点非空的条目数 |
 | `needs_review_files` | 待审查文件数 | `status: needs_review` 的课次与卡片文件数 |
 | `needs_review_pages` | 待审查页数 | 所有 coverage 中 `status: needs_review` 的条目数 |
@@ -109,7 +151,7 @@ description: 课程索引、全课程知识网络与进度文件的唯一写入�
 
 ```json
 {
-  "schema_version": "course-cn-v2",
+  "schema_version": "course-cn-v3",
   "course_id": "deep-learning",
   "updated_at": "2026-09-22T10:30:00+08:00",
   "sources": [
@@ -182,7 +224,7 @@ index_diff:
   cards_added: ["CNN"]
 protected_sections: ["我的笔记"]
 warnings: []
-schema_version: course-cn-v2
+schema_version: course-cn-v3
 ```
 
 | 字段 | 说明 |
@@ -194,7 +236,7 @@ schema_version: course-cn-v2
 | `index_diff` | 新增/删除的目录行、网络边、卡片行，只报变化 |
 | `protected_sections` | 本次保留的用户自定义章节标题 |
 | `warnings` | 每条含文件、原因、建议动作 |
-| `schema_version` | 固定 `course-cn-v2`（等于 `course_contracts.SCHEMA_VERSION`） |
+| `schema_version` | 固定 `course-cn-v3`（等于 `course_contracts.SCHEMA_VERSION`） |
 
 - 任一检查项未通过都不得返回 `success`；缺输入时返回 `blocked` 并逐项列出缺失字段。
 - `.course-progress.json` 是隐藏文件：`course_contracts.validate_write_path` 会判为 `hidden_write`，因此它不得出现在课次/卡片任务的 `allowed_writes` 中，只能由本 Agent 在索引任务内写入。

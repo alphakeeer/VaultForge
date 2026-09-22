@@ -1,13 +1,13 @@
 # VaultForge 课程版
 
-> **一句话定位**：把课程课件整理为中文 Obsidian 课程知识库的 Agent Skill——完整读取材料、建立逐页知识点账本、按教学顺序生成课次笔记，并为重要知识点生成有证据、有案例、有原文引用的详细知识卡片，支持低复杂度增量更新。
+> **一句话定位**：把课程课件写成**能读懂、能复习、能脱离课件使用**的中文 Obsidian 学习笔记，并把跨课程复用的概念沉淀到知识区。
 
-VaultForge 课程版面向“每周持续增加课件”的长期学习场景。它不是摘要工具，也不把每个 bullet 拆成一个原子笔记文件，而是同时保留两种视角：
+VaultForge 课程版面向“每周持续增加课件”的长期学习场景。产出分两类，定位不同：
 
-- **课次笔记**：严格按课件顺序，完整讲解一节课，并用覆盖清单自证没有漏讲；
-- **知识卡片**：抽取 CNN、RNN、Attention 等可复用概念，给出可脱离课次独立复习的详细解释。
+- **课次笔记**（主产物）：按**认知顺序**讲透一节课——先懂什么才能懂什么。正文不挂页码，允许并鼓励用自己的话讲、举例子、做类比；
+- **知识卡片**（跨课程资产）：抽取 CNN、Kalman Filter、World Model 等**领域通用概念**，存放在**知识区**（如 `50 Knowledge/`），不被任何一门课独占，**读者不打开课件也能读懂**。
 
-内容深度必须与来源材料成比例：材料讲得多就展开机制、步骤、公式、案例和限制；材料只提了名字就如实写“课件未展开”，不用常识凑篇幅。
+最高优先级是**可理解性优先于完整性**：材料讲得多就展开机制与例子；材料只提了名字就如实简述——**不写“课件未展开”这类审计式声明**。
 
 本文件是使用说明；**流程控制、运行边界与质量门槛的唯一契约来源是 [SKILL.md](./SKILL.md)**。
 
@@ -51,21 +51,36 @@ VaultForge 课程版面向“每周持续增加课件”的长期学习场景。
 
 ## 输出目录树
 
+产出分布在**两个位置**：课程目录放笔记，知识区放跨课程卡片。
+
 ```text
-课程名/
-├── 00. 课程索引.md              # 目录 + 全课程知识网络 + 卡片索引
+10 Courses/AIAA4220/                 # 课程目录
+├── 00. 课程索引.md                  # 目录 + 进度 + 关联卡片的 Dataview 视图
 ├── 01. 课程笔记/
-│   ├── L01 - 课程主题.md        # type: lesson
-│   └── L02 - 课程主题.md
-├── 02. 知识卡片/
-│   ├── CNN.md                   # type: concept
-│   └── RNN.md
-├── .course-progress.md          # 人类可读进度（索引 Agent 维护）
-├── .course-progress.json        # 机器状态（索引 Agent 维护，可选）
-└── .course-runtime.json         # 任务信封（编排脚本生成）
+│   └── L02 - Embodied AI System Overview.md   # type: lesson
+├── .course-progress.md              # 人类可读进度（索引 Agent 维护）
+├── .course-progress.json            # 机器状态（索引 Agent 维护）
+└── .course-runtime.json             # 任务信封（编排脚本生成）
+
+50 Knowledge/                        # 知识区（跨课程共享）
+├── _index.md                        # 知识库索引（Dataview 自动维护）
+├── AI/
+│   └── World Model.md               # type: concept
+└── Computer Science/
+    └── Kalman Filter.md
 ```
 
-一个课件通常对应一篇课次笔记，但可以产生多张知识卡片；卡片按可独立学习的知识点拆分，不按 bullet 机械拆分。除上述路径外不生成任何文件（不生成路线图、MOC、争议分析或更新报告）。详细字段契约见 [references/templates.md](./references/templates.md)。
+一个课件通常对应一篇课次笔记；知识卡片的数量由**建卡门槛**决定（跨课程复用 + 独立机制 + 领域通用），**一个课次 0–3 张**，宁少勿多。
+
+知识区位置可用课程目录下的 `.vaultforge.json` 配置：
+
+```json
+{ "knowledge_root": "50 Knowledge", "course_code": "AIAA4220" }
+```
+
+未配置时自动探测：从课程目录向上找到含 `.obsidian` 的 vault 根，取其中的 `50 Knowledge/`。
+
+除上述路径外不生成任何文件（不生成路线图、MOC、争议分析或更新报告）。详细字段契约见 [references/templates.md](./references/templates.md)，格式规范见 [references/obsidian-conventions.md](./references/obsidian-conventions.md)。
 
 ---
 

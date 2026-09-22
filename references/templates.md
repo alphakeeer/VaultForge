@@ -24,14 +24,16 @@
 
 | 对象 | 规则 | 示例 |
 |---|---|---|
-| 课程目录 | 用户指定，`course_id` 取目录名 | `深度学习/` |
-| 课次编号 | `L` + 两位序号，由课件在课程中的教学顺序决定 | `L01`、`L02`、`L12` |
-| 课次笔记文件 | `01. 课程笔记/{lesson_id} - {主题}.md` | `01. 课程笔记/L02 - CNN.md` |
-| 知识卡片文件 | `02. 知识卡片/{canonical_name}.md` | `02. 知识卡片/自注意力.md` |
-| 课程索引 | 固定 `00. 课程索引.md`（课程根目录唯一） | `00. 课程索引.md` |
-| 临时文件 | `{目标文件名}.tmp`，rename 前不得视为产物 | `L02 - CNN.md.tmp` |
-| `lesson_order` | 正整数，连续递增，用于排序；**不使用文件名排序** | `1`、`2`、`3` |
-| `concept_id` | 稳定 ID，来自标准名规范化，见下 | `cnn`、`自注意力` |
+| 课程目录 | 用户指定，`course_id` 取目录名 | `AIAA4220/` |
+| **知识区** | 用户指定，默认 `50 Knowledge`，按领域分子目录 | `50 Knowledge/AI/` |
+| 课次编号 | `L` + 两位序号，由课件在课程中的教学顺序决定 | `L01`、`L02` |
+| 课次笔记文件 | `01. 课程笔记/{lesson_id} - {English Title}.md` | `01. 课程笔记/L02 - Embodied AI System Overview.md` |
+| 知识卡片文件 | `{知识区}/{领域}/{English Concept Name}.md` | `50 Knowledge/AI/World Model.md` |
+| 课程索引 | 固定 `00. 课程索引.md`（课程根目录唯一） | — |
+| 知识库索引 | 固定 `_index.md`（知识区根目录唯一） | — |
+| 临时文件 | `{目标文件名}.tmp`，rename 前不得视为产物 | `World Model.md.tmp` |
+| `lesson_order` | 正整数，连续递增；**不使用文件名排序** | `1`、`2`、`3` |
+| `concept_id` | 稳定 ID，kebab-case，不随标题变化 | `world-model`、`kalman-filter` |
 
 `concept_id` 生成规则（与 `scripts/course_contracts.py` 的 `concept_id()` 一致）：
 
@@ -53,15 +55,18 @@
 ```yaml
 ---
 type: lesson
-course_id: deep-learning
+course_id: AIAA4220
 lesson_id: L02
 lesson_order: 2
-source_file: lectures/L02.pdf
+title: Embodied AI System Overview
+aliases: [L02 具身 AI 系统概览]
+source_file: Resource/AIAA 4220 L2.pdf
 source_hash: sha256:3f1c...
-source_range: lectures/L02.pdf:1-42
+source_range: "Resource/AIAA 4220 L2.pdf:1-63"
+tags: [course/AIAA4220]
 status: reviewed
 vf: true
-vf_version: course-cn-v1
+vf_version: course-cn-v2
 vf_status: pristine
 ---
 ```
@@ -77,7 +82,7 @@ vf_status: pristine
 | `source_range` | ✅ | `文件:页码段` | 见第 11 节格式 |
 | `status` | ✅ | 五态 | 见 2.3 |
 | `vf` | ✅ | `true` | 标记 VaultForge 产物 |
-| `vf_version` | ✅ | `course-cn-v1` | 生成器版本 |
+| `vf_version` | ✅ | `course-cn-v2` | 产物格式版本（v2 = 学习笔记优先架构） |
 | `vf_status` | ✅ | 三态 | 见 2.4 |
 
 ### 2.2 知识卡片（`type: concept`）
@@ -85,16 +90,18 @@ vf_status: pristine
 ```yaml
 ---
 type: concept
-course_id: deep-learning
-concept_id: cnn
-canonical_name: CNN
-aliases: [卷积神经网络, ConvNet]
-source_lessons: [L02, L03]
-source_files: [lectures/L02.pdf]
-source_range: lectures/L02.pdf:12-25
+concept_id: world-model
+canonical_name: World Model
+aliases: [世界模型, WAM]
+level: 核心                     # 核心 | 一般
+courses: [AIAA4220]            # 归属课程，供课程索引反查
+source_lessons: [L02]
+source_files: [Resource/AIAA 4220 L2.pdf]
+source_range: "Resource/AIAA 4220 L2.pdf:7-8"
+tags: [concept/embodied-ai]
 status: reviewed
 vf: true
-vf_version: course-cn-v1
+vf_version: course-cn-v2
 vf_status: pristine
 ---
 ```
@@ -133,195 +140,165 @@ vf_status: pristine
 
 ## 3. 课程索引模板
 
-```markdown
+课程索引由 `course-index-manager` 维护，含四个受管章节。**卡片部分使用 Dataview 自动生成**，不手工登记。
+
+````markdown
 ---
 type: index
-course_id: deep-learning
+course_id: AIAA4220
 status: reviewed
 vf: true
-vf_version: course-cn-v1
+vf_version: course-cn-v2
 vf_status: pristine
 ---
 
-# 深度学习
+# AIAA 4220 Embodied AI — 课程索引
 
-## 课程目标
-
-（一句话说明这门课要解决什么；来源为用户说明或课件首页，无来源时写“课件未说明”。）
-
-## 课程目录
+## 1. 课程目录
 
 | 顺序 | 课次 | 主题 | 来源课件 | 状态 |
 |---|---|---|---|---|
-| 1 | [[L01 - 神经网络基础]] | 神经网络基础 | lectures/L01.pdf | reviewed |
-| 2 | [[L02 - CNN]] | CNN | lectures/L02.pdf | reviewed |
+| 1 | [[L01 - ...]] | 具身智能导论 | `Resource/AIAA 4220 L1.pdf` | reviewed |
 
-## 全课程知识网络
+## 2. 本课关联的知识卡片
 
-- [[CNN]] —(prerequisite)→ [[神经网络基础]]
-- [[池化]] —(component)→ [[CNN]]
-- [[CNN]] —(contrast)→ [[RNN]]
-
-## 知识卡片索引
-
-| 卡片 | 标准名 | 别名 | 出现课次 |
-|---|---|---|---|
-| [[CNN]] | CNN | 卷积神经网络, ConvNet | L02, L03 |
-| [[RNN]] | RNN | 循环神经网络 | L05 |
-
-## 进度概览
-
-- 课件：3（DONE 2 / NEW 1）
-- 课次笔记：2
-- 知识卡片：5
-- 覆盖点数：46
-- 待复核：1
-
-## 用户自定义
-
-（保留用户在此追加的内容，索引 Agent 只做最小增量追加，不重排、不删除。）
+```dataview
+TABLE level AS "分级", file.folder AS "领域", source_lessons AS "涉及课次"
+FROM "50 Knowledge"
+WHERE type = "concept" AND contains(courses, "AIAA4220")
+SORT level ASC, file.name ASC
 ```
+
+## 3. 知识点覆盖进度
+
+| 课次 | 课件页数 | 覆盖 | 待复核 |
+|---|---:|---:|---:|
+
+## 4. 课件原文位置
+
+- `Resource/xxx.pdf` — 讲次标题（N 页）
+````
+
+**知识库索引**（知识区根目录 `_index.md`）同样用 Dataview：
+
+````markdown
+# 知识库索引
+
+## 全部概念卡片
+```dataview
+TABLE level AS "分级", courses AS "来源课程", file.folder AS "领域"
+FROM "50 Knowledge"
+WHERE type = "concept"
+SORT level ASC, file.name ASC
+```
+````
+
+> 已取消的旧章节：`## 课程目标`（合入索引开头说明）、`## 全课程知识网络`（知识关联改由 wikilink 表达）、手工的 `## 知识卡片索引` 表（改由 Dataview 生成）。
 
 ---
 
 ## 4. 课次笔记模板
 
+完整格式规范见 [`obsidian-conventions.md`](./obsidian-conventions.md)。结构如下：
+
 ```markdown
 ---
 type: lesson
-course_id: deep-learning
+course_id: AIAA4220
 lesson_id: L02
 lesson_order: 2
-source_file: lectures/L02.pdf
-source_hash: sha256:3f1c...
-source_range: lectures/L02.pdf:1-42
+title: Embodied AI System Overview
+aliases: [L02 具身 AI 系统概览]
+source_file: Resource/AIAA 4220 L2.pdf
+source_hash: sha256:...
+source_range: "Resource/AIAA 4220 L2.pdf:1-63"
+tags: [course/AIAA4220]
 status: reviewed
 vf: true
-vf_version: course-cn-v1
+vf_version: course-cn-v2
 vf_status: pristine
 ---
 
-# L02 - CNN
+# L02 - Embodied AI System Overview
 
-## 本节学习目标
+> [!abstract] 本讲要解决的问题
+> （一两句：这节从哪里来、要解决什么）
 
-- （来自课件明确说明的目标；课件未说明时，按实际内容归纳并标注“由内容归纳”）
+## 0. 知识地图
+### 0.1 本讲结构      # mermaid 图
+### 0.2 覆盖的知识点   # 表：知识点 / 英文 / 课件页
 
-## 课件主线
+## 1. <主题一>（课件 p.X–Y）
+### 1.1 <小节>
+### 1.2 <小节>
 
-> 按课件顺序记录主线，一段话说明本节的推进逻辑（问题 → 概念 → 机制 → 案例 → 边界）。
+## N. 复习
+### N.1 核心结论
+### N.2 自测题         # > [!question]- 可折叠
+### N.3 术语表         # 中英对照
 
-### 1. 问题与动机
-
-### 2. 核心概念
-
-### 3. 机制、步骤或公式
-
-### 4. 例子与系统案例
-
-### 5. 限制、边界与后续扩展
-
-## 知识点覆盖清单
-
-- [x] 卷积核与局部连接 — lectures/L02.pdf:3-6
-- [x] 参数共享 — lectures/L02.pdf:7-9
-- [ ] 池化 — lectures/L02.pdf:10（课件仅提及，未展开）
-- ⚠️ 反向传播推导 — lectures/L02.pdf:17（公式为图片，needs_review）
-
-## 本节知识网络
-
-- [[CNN]] —(prerequisite)→ [[神经网络基础]]
-- [[池化]] —(component)→ [[CNN]]
-
-## 本节知识卡片
-
-- [[CNN]]（create）
-- [[池化]]（lesson_only，未单独建卡）
-
-## 来源与复核项
-
-| 来源 | 覆盖范围 | 状态 |
-|---|---|---|
-| lectures/L02.pdf | 1-42 | covered 38 / no_knowledge 2 / needs_review 2 |
-
-复核项：p.17 公式图、p.23 动画中的状态转移过程。
+## 来源
+- 课件：`<路径>` —— <讲次标题>（N 页）
+- 延伸阅读：…
 ```
 
-**逐节写作要求**：每一节必须出现问题、定义或假设、机制、课件证据或例子、与前后的关系这五类信息中的相关部分；材料未覆盖的部分直接写明“课件未展开”。
+**写作约束**：
+
+1. 按**认知顺序**组织，不按课件页序；
+2. 正文**不挂页码**，页码只在章节覆盖范围、知识点表、必要回看提示中出现；
+3. H1 唯一，**禁止伪标题**（`**1.1 …**`），内容多的章节用 H3 细分；
+4. 专业术语保留英文，末尾附术语表；
+5. 关键处用 callout / mermaid / LaTeX；
+6. **不得出现审计语言**（“课件未展开”等）与**课件项目符号**（●○■）。
 
 ---
 
 ## 5. 知识卡片模板
 
+卡片存放在**知识区**（如 `50 Knowledge/AI/`），以概念为中心，**独立于课件**。完整格式规范见 [`obsidian-conventions.md`](./obsidian-conventions.md)。
+
 ```markdown
 ---
 type: concept
-course_id: deep-learning
-concept_id: cnn
-canonical_name: CNN
-aliases: [卷积神经网络, ConvNet]
+concept_id: world-model
+canonical_name: World Model
+aliases: [世界模型, WAM]
+level: 核心                     # 核心 | 一般
+courses: [AIAA4220]
 source_lessons: [L02]
-source_files: [lectures/L02.pdf]
-source_range: lectures/L02.pdf:3-9
+source_files: [Resource/AIAA 4220 L2.pdf]
+source_range: "Resource/AIAA 4220 L2.pdf:7-8"
+tags: [concept/embodied-ai]
 status: reviewed
 vf: true
-vf_version: course-cn-v1
+vf_version: course-cn-v2
 vf_status: pristine
 ---
 
-# CNN
+# World Model
 
-## 一句话定义
+> [!abstract] 一句话
+> （对象 + 边界：它是什么、解决什么、与最相近概念的关键差别）
 
-（对象 + 边界：它是什么、用于什么、与最相近概念的关键差别。）
-
-## 核心知识点
-
-### 背景与要解决的问题
-
-### 精确定义与边界
-
-### 工作机制或推导
-
-（按步骤写清因果链；有公式就说明变量含义与直觉。）
-
-### 例子、公式或实现直觉
-
-### 应用条件与失败模式
-
-### 与其他知识点的关系
-
-（只写有课件依据的关系，格式 `[[目标]] —(关系类型)→ 理由`。）
-
-## 相关案例
-
-（背景 / 过程 / 结果 / 启示。课件没有案例时写“课件未提供案例”。）
-
-## 原文引用
-
-> {课件中的实际原文摘录，保留原语言，不得改写}
-
-> — 来源：{文件}，{页码/slide 范围}
-
-## 在课程中的出现位置
-
-| 课次 | 页码/slide | 该处讲了什么 |
-|---|---|---|
-| L02 | 3-9 | 定义与卷积操作 |
-| L03 | 1-4 | 与池化的组合使用 |
-
-## 核心思考
-
-1. （检验理解的迁移问题）
-2. （检验边界与失效条件的问题）
+## 定义
+## 为什么重要
+## 核心机制 / 形式化
+## 类型与实例
+## 常见误区
+## 相关概念
+## 自测
+## 参考
 ```
 
-**硬性要求**
+**硬性要求**：
 
-- 六段式（`一句话定义`、`核心知识点` 六个子节、`相关案例`、`原文引用`、`在课程中的出现位置`、`核心思考`）一个都不能省；材料未覆盖的子节写“课件未覆盖”，不得用外部内容填充。
-- `原文引用` 必须是实际摘录；只写来源元数据、没有引文视为无效。
-- `核心思考` 至少 2 题，不得出现“请总结本文”类问题。
-- 不得机械复制课次笔记段落；卡片应把散落在多页的解释组织成独立学习路径。
+- 文件名与 H1 用**英文概念名**；`concept_id` 用 kebab-case；
+- 必须满足三条**建卡门槛**（跨课程复用 + 独立机制 + 领域通用）；
+- **读者不打开课件也能读懂**——自检方式：假设看不到 PDF，卡里的每个术语是否都有交代？
+- 八个段落齐全，`## 常见误区` 不得空壳；
+- 正文**不逐句引课件**，出处写在 `## 参考`；
+- **不得出现审计语言**（“课件未展开/未覆盖”）；
+- 至少 2 道自测题；相关概念链接目标必须真实存在。
 
 ---
 
@@ -433,7 +410,7 @@ allowed_writes:
   - 01. 课程笔记/L02 - CNN.md
 context_packet: /tmp/L02-context.json
 must_return: [output_files, coverage, concept_candidates, warnings]
-schema_version: course-cn-v2
+schema_version: course-cn-v3
 ```
 
 必填字段：`task_id`、`agent`、`course_id`、`source_files`、`allowed_writes`、`must_return`、`schema_version`。
@@ -448,7 +425,7 @@ schema_version: course-cn-v2
 
 所有返回值共用必填字段：`task_id`、`status`、`output_files`、`coverage`、`warnings`、`schema_version`。
 
-`status` ∈ {`success`, `needs_review`, `blocked`, `failed`}；`schema_version` 必须等于 `course-cn-v2`。
+`status` ∈ {`success`, `needs_review`, `blocked`, `failed`}；`schema_version` 必须等于 `course-cn-v3`。
 
 ### 9.1 `lesson-organizer`
 
@@ -469,7 +446,7 @@ concept_candidates:
     reason: "课件仅提及一次，未展开"
     source_range: lectures/L02.pdf:10
 warnings: []
-schema_version: course-cn-v2
+schema_version: course-cn-v3
 ```
 
 ### 9.2 `concept-card-builder`
@@ -477,18 +454,18 @@ schema_version: course-cn-v2
 ```yaml
 task_id: concepts-L02
 status: success
-output_files: [02. 知识卡片/CNN.md]
+output_files: [50 Knowledge/AI/World Model.md]
 decisions:
   - candidate: CNN
     action: create
-    target: 02. 知识卡片/CNN.md
+    target: 50 Knowledge/AI/World Model.md
     concept_id: cnn
     questions: ["它解决什么问题？", "卷积如何提取局部模式？"]
     source_ranges: [lectures/L02.pdf:3-9]
     reason: "来源跨多个页面，具有独立机制和后续复用价值"
 coverage: []
 warnings: []
-schema_version: course-cn-v2
+schema_version: course-cn-v3
 ```
 
 ### 9.3 `course-index-manager`
@@ -501,7 +478,7 @@ updated: {lessons_added: 1, cards_added: 2, links_deduped: 3}
 stats: {lessons: 3, concepts: 5, covered_points: 46, needs_review: 1}
 coverage: []
 warnings: []
-schema_version: course-cn-v2
+schema_version: course-cn-v3
 ```
 
 ### 9.4 `course-reviewer`
@@ -509,7 +486,7 @@ schema_version: course-cn-v2
 ```yaml
 task_id: review-L02
 status: pass            # pass | needs_fix | blocked
-output_files: [02. 知识卡片/CNN.md]   # 实际修复写入的文件；未修复时为 []
+output_files: [50 Knowledge/AI/World Model.md]   # 实际修复写入的文件；未修复时为 []
 coverage: []                          # 审查任务不产出覆盖清单，固定空数组
 checks:
   frontmatter: pass
@@ -521,14 +498,14 @@ checks:
   protection: pass
 issues:
   - severity: P1
-    file: 02. 知识卡片/CNN.md
+    file: 50 Knowledge/AI/World Model.md
     section: 工作机制或推导
     problem: "账本记录 p.9 的池化步骤，正文没有解释"
     source_range: lectures/L02.pdf:9
-repair_files: [02. 知识卡片/CNN.md]
+repair_files: [50 Knowledge/AI/World Model.md]
 coverage: []
 warnings: []
-schema_version: course-cn-v2
+schema_version: course-cn-v3
 ```
 
 ---
@@ -565,13 +542,13 @@ schema_version: course-cn-v2
 
 ```json
 {
-  "schema_version": "course-cn-v2",
+  "schema_version": "course-cn-v3",
   "sources": [
     {"file": "lectures/L01.pdf", "hash": "sha256:1a2b...", "state": "DONE", "processed_at": "2026-09-01"},
     {"file": "lectures/L02.pdf", "hash": "sha256:3f1c...", "state": "DONE", "processed_at": "2026-09-08"}
   ],
   "lessons": [{"lesson_id": "L01", "file": "01. 课程笔记/L01 - 神经网络基础.md", "lesson_order": 1, "status": "reviewed", "vf_status": "pristine"}],
-  "concepts": [{"concept_id": "cnn", "canonical_name": "CNN", "file": "02. 知识卡片/CNN.md", "status": "reviewed", "vf_status": "pristine"}]
+  "concepts": [{"concept_id": "world-model", "canonical_name": "World Model", "file": "50 Knowledge/AI/World Model.md", "status": "reviewed", "vf_status": "pristine"}]
 }
 ```
 
@@ -639,7 +616,7 @@ python3 scripts/context-extractor.py <课程目录> /tmp/L02-extract.md -o /tmp/
 
 1. 写 `{目标文件名}.tmp`，内容完整（含 frontmatter）；
 2. 暂存期间将 frontmatter `status` 置为 `filling`；
-3. 校验：文件非空；frontmatter 以 `---` 开始并以 `---` 结束；必要的结构标题齐全；卡片含六段式；
+3. 校验：文件非空；frontmatter 以 `---` 开始并以 `---` 结束；必要的结构标题齐全；卡片八个段落齐全；
 4. `rename` 覆盖目标文件；
 5. 将 `status` 更新为 `filled`（审查后为 `reviewed`）；
 6. 追加进度事件，汇报实际文件 hash。
@@ -661,13 +638,17 @@ python3 scripts/context-extractor.py <课程目录> /tmp/L02-extract.md -o /tmp/
 
 | 禁止 | 反例 | 正确做法 |
 |---|---|---|
-| 用一段总述代替多个知识点 | “本节讲了 A、B、C，都很重要” | 每个知识点单列，给出定义、机制、证据 |
-| 依据标题或记忆补写 | 只看到标题就写满一页 | 写“课件未展开” |
-| 编造案例/实验/引用 | 自造一个“例如某公司…” | 写“课件未提供案例” |
-| 伪引用 | 只写“— 来源：L02.pdf p.9” 无引文 | 给出实际摘录 + 来源 |
-| 同一内容多文件重复 | 课次笔记与卡片整段复制 | 卡片独立组织，课次保留顺序 |
-| 固定字数凑长度 | 为达字数重复同义句 | 深度与来源成比例 |
+| **逐句挂页码** | `p.27 的标题即定义："Classification + Localization"；p.28 …` | 章节标题标一次「课件 p.27–30」 |
+| **审计式声明** | “课件未展开”“课件未覆盖”“本课程未提供”“不能作为数据来源” | 如实简述；确需回看写「建议对照课件 p.17」 |
+| **复制课件符号** | 正文出现 `●` `○` `■` `▪` | 用 Markdown 列表 `-` |
+| **伪标题** | `**2.1 世界模型（p.7）**` | `### 2.1 World Model（课件 p.7–8）` |
+| **课件页序当叙述顺序** | 按 p.2 / p.3 / p.10 逐页编号 | 按「先懂什么才能懂什么」组织 |
+| 用一段总述代替多个知识点 | “本节讲了 A、B、C，都很重要” | 逐个给出定义、机制、例子、边界 |
+| 依据标题或记忆补写 | 只看到标题就写满一页 | 如实简述，或标 `needs_review` |
+| 编造案例/实验/引用 | 自造一个“例如某公司…” | 用课件里的例子；没有就换一种说明方式 |
+| 把课外知识伪装成课件结论 | 把外部查到的公式说成“课件给出” | 自然说明来源：「值得一提的背景是…」 |
+| **卡片依赖课件** | 卡片里写「见 p.7 的图」 | 卡片自足；确需引用时用 `![[xxx.pdf#page=7]]` 嵌入 |
+| **为“网络完整”穷举连边** | 产出上百条纯文本关系边 | 只在读者会想跳转时连线 |
 | 文件名排序当作课次顺序 | `sorted(glob("*.md"))` | 用 `lesson_order` 数值排序 |
-| 用摘要/笔记替代原文 | 从路线图或旧笔记反推内容 | 回到课件原文或上下文包 |
-| 未标注的补充知识 | 把常识写成课件结论 | 标注“（补充解释）” |
+| 用摘要/笔记替代原文 | 从旧笔记反推内容 | 回到课件原文或上下文包 |
 | 覆盖用户内容 | 直接重写 `user_modified` 文件 | 保留正文，仅返回建议 |

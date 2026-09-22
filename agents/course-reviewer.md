@@ -31,87 +31,52 @@ description: 只审查本次新增/更新的课次与卡片：逐维度核查覆
 
 ## 审查维度与可判定条目
 
-### 1. 边界与状态
+审查分三层。**任何一层不通过都不能给出 `pass`** —— 特别注意：旧版只审“事实层”，导致产出虽然证据完整却没人读得下去；B 层是新增的、同等重要。
 
-- [ ] 每个文件 frontmatter 完整：课次含 `type: lesson`、`lesson_id`、`lesson_order`；卡片含 `type: concept`、`concept_id`、`canonical_name`、`aliases`、`source_lessons`；公共字段含 `course_id`、`source_hash`、`status`、`vf: true`、`vf_version`、`vf_status`。
-- [ ] `status` ∈ {draft, filling, filled, reviewed, needs_review}，`vf_status` ∈ {pristine, user_modified, locked}；交付文件不得停在 `draft` / `filling`。
-- [ ] `lesson_order` 是整数，且索引/目录顺序为数字升序（反例：`L2` 排在 `L10` 之后）。
-- [ ] 实际写入路径全部落在 `allowed_writes` 内，无越界文件、无隐藏文件写入、无残留 `*.tmp`。
-- [ ] 课次与卡片的 `source_hash` 与 `source_files` 中的 hash 一致。
+### A. 事实层（不可妥协）
 
-### 2. 覆盖证据
+- [ ] **覆盖完整**：每个课件都有 coverage，每一页/slide 都有 `covered` / `no_knowledge` / `needs_review` 之一，页号为正整数；账本页集合与 coverage 页集合一致，不跳页。
+- [ ] **`covered` 有名有实**：条目必须有非空知识点，且页号落在课件实际页数范围内。
+- [ ] **无编造**：正文中的数字、案例、实验结果、引用、判断都能在课件中找到依据（外部补充需能追溯到真实出处）。
+- [ ] **补充知识未被伪装**：课件之外的补充内容与课件结论可区分，不得把课外内容说成“课件给出的”。
+- [ ] **图片页如实处理**：`needs_review` 只用于图像/公式/动画无法确认的页，数量与账本一致；正文以自然语句提示回看，而非假装已读。
+- [ ] **frontmatter 完整且一致**：课次含 `type` / `lesson_id` / `lesson_order` / `source_hash`；卡片含 `type` / `concept_id` / `canonical_name` / `aliases` / `level` / `courses` / `source_lessons`；`source_hash` 与 `source_files` 一致。
 
-- [ ] 每个课件都有 coverage，且覆盖来源属于本次 `source_files`。
-- [ ] 每一页/slide 都有 `covered` / `no_knowledge` / `needs_review` 之一，页号为正整数；账本页集合与 coverage 页集合一致，不得跳页。
-- [ ] `covered` 条目必须有非空知识点，且页号落在该课件实际页数范围内。
-- [ ] 账本中 `role: definition | mechanism | formula | example` 的页，其知识点都能在课次正文找到对应解释。
-- [ ] `needs_review` 只用于图像/公式/动画/speaker notes 无法确认的页，且数量与账本一致；不得用来掩盖未读页面。
-- [ ] 状态为 `no_knowledge` 的页（封面、目录、致谢）确实不含知识点。
+### B. 可读性层（决定笔记能不能用）
 
-### 3. 讲解完整性
+- [ ] **标题层级**：H1 唯一；**无伪标题**（`**1.1 …**`）；H2 下有必要时已用 H3 细分；不存在“一个 H2 塞数千字”的扁平结构。
+- [ ] **无逐句页码**：正文中不出现密集 `(p.N)`；页码只出现在章节覆盖范围、知识点清单表、或确需回看时的单处提示。
+- [ ] **无审计语言**：不出现“课件未展开”“课件未覆盖”“本课程未提供”“不能作为数据来源”这类声明。
+- [ ] **无课件符号**：不出现 `●` `○` `■` `▪` 等项目符号（它们抄自课件 PDF）。
+- [ ] **术语规范**：专业术语保留英文；笔记末尾有术语表（中英对照）。
+- [ ] **Obsidian 特性使用得当**：关键处用了 callout / mermaid / LaTeX，而不是加粗堆砌；开头有 `[!abstract]` 摘要与知识地图。
+- [ ] **可独立理解**：合上笔记/卡片，能否回答“是什么、解决什么、怎么工作、何时失效”。材料单薄处只要如实简述即可，**不因篇幅短而扣分**。
 
-对账本中每个重要知识点逐项核对，六问缺一即记问题：
+### C. 结构层
 
-| 检查项 | 可判定标准 | 反例 |
-|---|---|---|
-| 背景/要解决的问题 | 正文说明它为何出现或替代了什么 | 直接给定义，不问动机 |
-| 定义与边界 | 有定义句、适用范围、符号或术语约定 | 只有名称和形容词 |
-| 机制/步骤/公式 | 有步骤、因果链或变量含义 | 一句“它通过某种方式工作” |
-| 课件证据/例子 | 给出页号与课件中的例子、结果或明示“课件未提供” | 编造实验数据 |
-| 应用与限制 | 说明何时用、何时失效 | 只讲优点 |
-| 与其他知识点的关系 | 有依据的关系或明示无 | 标题相似就连边 |
-
-- [ ] 不得用一段总述替代账本中的多个独立知识点（应拆节或拆卡片）。
-- [ ] 材料丰富的概念不得只写概述；材料单薄的概念不因篇幅短而扣分，但必须覆盖账本中出现的定义与边界。
-- [ ] 每个知识点至少有一个可定位的 `source_range`。
-
-### 4. 来源真实性
-
-- [ ] 关键定义、数字、实验结果、引用与外部判断都能回到具体 `source_range`。
-- [ ] 引文是课件中的**实际摘录**（原文语言），不是改写后的转述；改写不得放在引用位置。
-- [ ] 引用能在 `source_context` 中定位到原文；定位失败即为伪引用。
-- [ ] 无法确认的图像、公式、图表、动画已标 `needs_review`，没有假装已读。
-- [ ] 补充的常识性解释已明确标注为“补充解释”，未伪装成课件结论。
-- [ ] 来源范围与课件页数/段落范围一致，无越界页码与不存在的 slide。
-
-### 5. 非空话与非重复
-
-- [ ] 删除同义反复（“重要”“很关键”“是基础”）、无来源泛泛科普、与本概念无关的背景。
-- [ ] 案例必须来自课件并含背景、过程、结果、启示四要素；无案例时明示“课件未提供案例”。
-- [ ] 卡片正文不是课次笔记段落的机械复制；同一知识点不在同一文件内重复成大段。
-- [ ] 卡片无空壳章节：出现的小节标题下必须有实质内容或“课件未覆盖”。
-- [ ] 检测与其他卡片/课次的大段重复，命中时指出重复区间与建议归属。
-
-### 6. 概念一致性
-
-- [ ] `concept_id` 稳定且唯一，`concept_id` / `canonical_name` / `aliases` 三者无冲突。
-- [ ] 同名异义必须带显式上下文后缀（如 `attention-nlp` / `attention-vision`），禁止仅凭词面自动合并。
-- [ ] `merge` 决策写明了共同来源与拟新增 alias；`lesson_only` 未创建独立卡片。
-- [ ] 卡片与至少一个课次有反向链接，课次 `## 本节知识卡片` 与卡片 frontmatter `source_lessons` 一致。
-- [ ] wikilink 目标实际存在且解析唯一，无断链、无重复链接行。
-
-### 7. 关系与保护
-
-- [ ] 关系仅使用六种白名单类型：`prerequisite` / `component` / `contrast` / `extension` / `application` / `sequence`。
-- [ ] 每条关系有课件依据，不是标题共享词语；同一 `(source, relation, target)` 不重复，无自动反向边。
-- [ ] `user_modified` / `locked` 文件正文、hash、mtime 未被改动（依据 `protection_snapshot`）。
-- [ ] 未授权文件、未在 `reviewed_files` 中的历史文件没有被本次任务改写。
+- [ ] **建卡门槛**：每张卡片都满足三条门槛（跨课程复用 + 独立机制 + 领域通用概念）；不满足的概念应写在笔记里而不是建卡。
+- [ ] **卡片规范**：位于**知识区**、文件名与 H1 用**英文**、frontmatter 含 `level` / `courses` / `tags`；八个段落齐全且无空壳。
+- [ ] **卡片独立于课件**：卡片正文不逐句引课件，`## 参考` 列出出处；不出现审计式声明。
+- [ ] **链接健康**：笔记提到概念处**内联**了卡片链接；全库 wikilink 断链为 0；没有为“网络完整”而穷举的边。
+- [ ] **概念一致性**：`concept_id` 稳定唯一；同名异义带显式后缀（`attention-nlp`）；`merge` 写明共同来源与新增 alias；`lesson_only` 未建卡。
+- [ ] **保护与边界**：写入路径都在 `allowed_writes` 内；无残留 `*.tmp`；`user_modified` / `locked` 文件未被改动；未越界改写课次/卡片正文。
+- [ ] **状态一致**：交付文件不停留在 `draft` / `filling`；课次 `lesson_order` 为整数且索引按数字升序。
 
 ## 严重级别与处置
 
 | 级别 | 定义 | 示例 | 处置 |
 |---|---|---|---|
 | `P0` | 证据层或保护层被破坏，索引不可信 | 课件完全没有 coverage；`covered` 页号越界；关键判断或引文无法在上下文中定位（伪引用）；`user_modified` / `locked` 文件被覆盖；写入 `allowed_writes` 之外的路径；未读全部页面即成文（账本页数不足） | **停止索引更新**，不得返回 `pass`；主 Agent 先修复来源与保护问题，再重跑对应任务 |
-| `P1` | 本次产物不满足质量门槛，但可定点修复 | 账本中的主要知识点漏写；课次顺序错误；卡片重复或同义未合并；`concept_id` 冲突；卡片六段式缺失；关键定义无来源 | **退回对应任务**（lesson-organizer / concept-card-builder）重写，不重跑整门课程 |
+| `P1` | 本次产物不满足质量门槛，但可定点修复 | 账本中的主要知识点漏写；课次顺序错误；卡片重复或同义未合并；`concept_id` 冲突；卡片八个段落缺失；关键定义无来源 | **退回对应任务**（lesson-organizer / concept-card-builder）重写，不重跑整门课程 |
 | `P2` | 局部表达或格式问题，不影响事实与覆盖 | 局部解释含糊、术语不统一；wikilink 显示名与文件名不一致；表格/公式排版问题；补充解释未标注 | **记录具体修复建议**，不阻断，写入 `warnings` |
 
 ## 诚实性检查
 
-- 课件没有案例时，检查是否明确写了“课件未提供案例”；**要求编造案例同样判为 P1**。
-- 课件只提到名称、未展开时，检查是否写“课件未展开”，不得用外部常识填充成整节内容。
-- 检查 `needs_review` 是否被诚实申报：账本中的待确认页必须在 coverage 与正文中同时出现，不得隐藏。
-- 检查引用是否为真实摘录而非改写；检查“补充解释”是否与课件结论明确区分。
-- 检查统计数字是否来自实际文件扫描；把模型自报估算当证据判为 `P1`。
+- **不得编造**：案例、数据、实验结果、引用都必须能追溯到课件或明确标注的外部来源；要求编造案例判为 P1。
+- **不得假装已读**：`needs_review` 页必须在 coverage 中如实申报，正文以自然语句提示回看。
+- **不得把课外知识伪装成课件结论**：补充内容应能与课件结论区分。
+- **不得把“课件缺口”写进笔记**：出现“课件未展开 / 课件未覆盖 / 本课程未提供 / 不能作为数据来源”这类审计式声明，判为 P2（可读性问题，可定点修复）。
+- **统计数字必须来自实际扫描**；把模型自报估算当证据判为 P1。
 
 ## 不通过条件
 
@@ -138,8 +103,8 @@ description: 只审查本次新增/更新的课次与卡片：逐维度核查覆
 task_id: review-L02
 verdict: pass | needs_fix | blocked
 status: success | needs_review | blocked | failed   # 映射见下表
-reviewed_files: [01. 课程笔记/L02 - CNN.md, 02. 知识卡片/CNN.md]
-output_files: [02. 知识卡片/CNN.md]   # 实际修复写入的文件；未修复时为 []
+reviewed_files: [01. 课程笔记/L02 - Embodied AI System Overview.md, 50 Knowledge/AI/World Model.md]
+output_files: [50 Knowledge/AI/World Model.md]   # 实际修复写入的文件；未修复时为 []
 coverage: []                          # 审查任务不产出覆盖清单，固定空数组
 checks:
   boundary_state: pass          # 边界与状态
@@ -151,7 +116,7 @@ checks:
   relation_protection: pass     # 关系与保护
 issues:
   - severity: P1
-    file: 02. 知识卡片/CNN.md
+    file: 50 Knowledge/AI/World Model.md
     section: 工作机制
     problem: "账本 L02 p.9 记录了池化窗口与步长，正文只写了一句概述"
     source_range: Lecture/L02.pdf:9
@@ -167,7 +132,7 @@ retry:
   attempt: 1
   max_attempts: 2
 warnings: []
-schema_version: course-cn-v2
+schema_version: course-cn-v3
 ```
 
 | 字段 | 说明 |
@@ -184,7 +149,7 @@ schema_version: course-cn-v2
 | `repair_files` | 本次实际修改的文件；未获授权时必须为空数组 |
 | `retry` | 建议退回的任务与当前尝试次数，`attempt` 不得超过 `max_attempts: 2` |
 | `warnings` | 无法判定或需人工确认的事项 |
-| `schema_version` | 固定 `course-cn-v2`（等于 `course_contracts.SCHEMA_VERSION`） |
+| `schema_version` | 固定 `course-cn-v3`（等于 `course_contracts.SCHEMA_VERSION`） |
 
 - 严重级别只写 `P0` / `P1` / `P2`，不引入高/中/低等第二套分级。
 - 任何 P0 存在时不得给出 `pass`；不得以“整体质量尚可”为由放过 P0/P1。

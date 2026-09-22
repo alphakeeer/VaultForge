@@ -42,6 +42,14 @@ def frontmatter(text: str) -> dict[str, str]:
 
 
 def scan(course_dir: Path) -> dict[str, Any]:
+    progress_data = {}
+    progress_json = course_dir / ".course-progress.json"
+    if progress_json.exists():
+        try:
+            progress_data = json.loads(progress_json.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            progress_data = {}
+    previous = {x.get("file"): x for x in progress_data.get("sources", []) if isinstance(x, dict)}
     sources = []
     for path in sorted(course_dir.rglob("*")):
         if not path.is_file() or path.suffix.lower() not in SOURCE_EXTENSIONS:
@@ -51,11 +59,18 @@ def scan(course_dir: Path) -> dict[str, Any]:
             continue
         if path.name in GENERATED_FILES or path.name.startswith("."):
             continue
-        sources.append({
+        current = {
             "file": str(rel),
             "hash": "sha256:" + sha256_file(path),
             "bytes": path.stat().st_size,
-        })
+        }
+        old = previous.get(current["file"])
+        current["state"] = "DONE" if old and old.get("hash") == current["hash"] else ("UPDATED" if old else "NEW")
+        sources.append(current)
+    current_files = {s["file"] for s in sources}
+    removed = [{"file": f, "hash": v.get("hash"), "state": "REMOVED"}
+               for f, v in previous.items() if f not in current_files]
+    sources.extend(removed)
 
     lessons = []
     concepts = []
@@ -70,7 +85,10 @@ def scan(course_dir: Path) -> dict[str, Any]:
 
     progress_path = course_dir / ".course-progress.md"
     progress = progress_path.read_text(encoding="utf-8") if progress_path.exists() else ""
-    return {"course_dir": str(course_dir), "sources": sources, "lessons": lessons, "concepts": concepts, "progress_exists": bool(progress)}
+    return {"course_dir": str(course_dir), "sources": sources, "lessons": lessons, "concepts": concepts,
+            "progress_exists": bool(progress), "progress": progress_data,
+            "states": {state: sum(1 for s in sources if s.get("state") == state)
+                       for state in ("NEW", "UPDATED", "DONE", "REMOVED")}}
 
 
 def main() -> None:

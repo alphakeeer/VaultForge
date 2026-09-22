@@ -325,13 +325,14 @@ def find_relationships_heuristic(
         note1, note2
     )
 
-    derivation_lexemes = (
+    # 课程版不再生成旧的 derivation/analogy/context 关系。
+    prerequisite_lexemes = (
         "因此", "所以", "从而", "导致", "结果表明", "得出结论",
         "由此可见", "证明", "推导", "意味着", "可见",
         "hence", "therefore", "thus", "consequently", "implies", "it follows",
     )
-    if _count_lexemes(combined, derivation_lexemes) >= 2 and topical_anchor:
-        relationships.append(("derivation", "推导关系"))
+    if _count_lexemes(combined, prerequisite_lexemes) >= 2 and topical_anchor:
+        relationships.append(("prerequisite", "前置关系"))
 
     analogy_lexemes = (
         "类比", "类似于", "类似", "同理", "正如", "好比",
@@ -339,7 +340,7 @@ def find_relationships_heuristic(
         "likewise", "by analogy", "comparable to",
     )
     if _count_lexemes(combined, analogy_lexemes) >= 1 and topical_anchor:
-        relationships.append(("analogy", "原理相似"))
+        relationships.append(("contrast", "对比关系"))
 
     contradiction_lexemes = (
         "但是", "然而", "相反", "不同于", "矛盾", "对立", "争议",
@@ -348,7 +349,7 @@ def find_relationships_heuristic(
     if _count_lexemes(combined, contradiction_lexemes) >= 2 and _title_topic_overlap(
         note1, note2
     ):
-        relationships.append(("contradiction", "结论矛盾"))
+        relationships.append(("contrast", "对比关系"))
 
     same_folder = note1["folder"] == note2["folder"]
     application_lexemes = (
@@ -372,7 +373,7 @@ def find_relationships_heuristic(
         "context", "phase", "historically",
     )
     if same_h2_diff_h3 and _count_lexemes(combined, context_lexemes) >= 1:
-        relationships.append(("context", "背景关联"))
+        relationships.append(("sequence", "课程顺序"))
 
     return relationships
 

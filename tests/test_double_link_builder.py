@@ -29,7 +29,7 @@ def _make_temp_vault(tmp_root):
 
 
 class FindRelationshipsHeuristicTest(unittest.TestCase):
-    def test_derivation_detected(self):
+    def test_prerequisite_detected(self):
         note1 = {
             "path": "/a/1.md",
             "title": "网络效应",
@@ -43,9 +43,9 @@ class FindRelationshipsHeuristicTest(unittest.TestCase):
             "folder": "01. 平台战略/网络效应",
         }
         rels = mod.find_relationships_heuristic(note1, note2)
-        self.assertTrue(any(r[0] == "derivation" for r in rels))
+        self.assertTrue(any(r[0] == "prerequisite" for r in rels))
 
-    def test_analogy_detected(self):
+    def test_contrast_detected_from_analogy_language(self):
         note1 = {
             "path": "/a/1.md",
             "title": "网络效应",
@@ -59,7 +59,7 @@ class FindRelationshipsHeuristicTest(unittest.TestCase):
             "folder": "01. 平台战略/网络效应",
         }
         rels = mod.find_relationships_heuristic(note1, note2)
-        self.assertTrue(any(r[0] == "analogy" for r in rels))
+        self.assertTrue(any(r[0] == "contrast" for r in rels))
 
     def test_contradiction_detected(self):
         note1 = {
@@ -75,7 +75,7 @@ class FindRelationshipsHeuristicTest(unittest.TestCase):
             "folder": "01. 平台战略/生态治理",
         }
         rels = mod.find_relationships_heuristic(note1, note2)
-        self.assertTrue(any(r[0] == "contradiction" for r in rels))
+        self.assertTrue(any(r[0] == "contrast" for r in rels))
 
     def test_application_detected(self):
         note1 = {
@@ -107,7 +107,7 @@ class FindRelationshipsHeuristicTest(unittest.TestCase):
             "folder": "01. 平台战略/生态治理",
         }
         rels = mod.find_relationships_heuristic(note1, note2)
-        self.assertTrue(any(r[0] == "context" for r in rels))
+        self.assertTrue(any(r[0] == "sequence" for r in rels))
 
     def test_no_false_positive_unrelated(self):
         note1 = {

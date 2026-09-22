@@ -14,6 +14,10 @@ class CourseSkillIntegrityTest(unittest.TestCase):
         for marker in ("课程索引", "课程笔记", "知识卡片", "课程扫描与增量判定"):
             self.assertIn(marker, self.skill)
 
+    def test_rich_content_quality_gate_present(self):
+        for marker in ("逐页知识点账本", "内容深度必须与来源材料成比例", "原文引用", "核心思考"):
+            self.assertIn(marker, self.skill)
+
     def test_research_and_redundant_outputs_removed(self):
         self.assertIn("争议分析文件", self.skill)
         self.assertIn("不生成额外报告文件", self.skill)
